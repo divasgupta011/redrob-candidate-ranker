@@ -1,0 +1,265 @@
+# =============================================================================
+# Distilled rubric for the Redrob "Senior AI Engineer — Founding Team" JD.
+#
+# This file is the system's *understanding of the role*. The prose JD was read
+# carefully (offline) and compressed into structured, weighted signals. It holds
+# DATA ONLY -- vocabularies, lists, thresholds, weights. All decision LOGIC lives
+# in Python (features / honeypot / behavioral / disqualifiers), so this file stays
+# auditable and is the single place to tune the ranker.
+#
+# Every entry traces to a specific line in job_description.docx. Key anchors:
+#   "Things you absolutely need"        -> must_haves
+#   "Things we'd like ... but won't reject" -> nice_to_haves
+#   "Things we explicitly do NOT want"  -> disqualifiers
+#   "How to read between the lines"     -> ideal_profile, weights
+#   behavioral signals + "not actually available" -> behavioral
+# =============================================================================
+
+role:
+  title: "Senior AI Engineer — Founding Team"
+  company: "Redrob AI"
+  seniority: senior
+  country_preference: India
+  experience:
+    min_years: 5        # JD: "5-9 years" band...
+    max_years: 9
+    ideal_min: 6        # ...JD: "6-8 years total experience"
+    ideal_max: 8
+    band_soft: true     # "This is a range, not a requirement"
+    applied_ml_years_ideal: 4   # "4-5 are in applied ML/AI roles at product companies"
+
+# Preferred locations (Pune/Noida offices; Tier-1 Indian cities welcome; relocation ok).
+location:
+  primary: [pune, noida]
+  acceptable_in_country: [hyderabad, mumbai, delhi, "delhi ncr", "new delhi", gurgaon,
+                          gurugram, bengaluru, bangalore, chennai, kolkata]
+  country: [india]
+  relocation_helps: true       # willing_to_relocate compensates for a non-primary city
+  sponsor_visas: false         # "Outside India: case-by-case, we don't sponsor work visas"
+
+# -----------------------------------------------------------------------------
+# Title / role families. The DECISIVE anti-stuffer signal: a "Marketing Manager"
+# with a perfect AI skills list is not a fit. Matching is substring-on-words over
+# current + historical titles AND career-evidence phrases (for plain-language fits
+# who never use the exact title).
+# -----------------------------------------------------------------------------
+titles:
+  core:        # direct fit for the intelligence-layer role
+    - ai engineer
+    - ml engineer
+    - machine learning engineer
+    - applied scientist
+    - applied ml
+    - applied ai
+    - nlp engineer
+    - search engineer
+    - search relevance
+    - ranking engineer
+    - relevance engineer
+    - recommendation systems engineer
+    - recommender
+    - information retrieval
+    - research engineer        # only counts WITH production evidence (see disqualifiers)
+    - ml platform
+    - mlops engineer
+  adjacent:    # transferable; partial credit, needs evidence to rise
+    - data scientist
+    - data engineer
+    - software engineer
+    - backend engineer
+    - platform engineer
+    - full stack
+    - ai researcher
+  negative:    # title strongly inconsistent with the role => stuffer red flag
+    - marketing manager
+    - hr manager
+    - human resources
+    - sales executive
+    - account
+    - accountant
+    - graphic designer
+    - operations manager
+    - project manager
+    - business analyst
+    - civil engineer
+    - mechanical engineer
+    - content writer
+    - customer support
+    - qa engineer
+    - frontend engineer
+    - mobile developer
+
+# -----------------------------------------------------------------------------
+# Skill ontology. Each capability lists the surface terms that count for it.
+# A term only earns credit when CORROBORATED (duration + endorsements + Redrob
+# assessment score); see weights.skill_trust. This is what defeats keyword stuffing.
+# -----------------------------------------------------------------------------
+must_haves:                      # JD "Things you absolutely need"
+  - id: embeddings_retrieval
+    weight: 1.2
+    skills: [embeddings, embedding, sentence-transformers, sentence transformers, bge, e5,
+             openai embeddings, semantic search, dense retrieval, retrieval, ann, knn,
+             nearest neighbor, two-tower, bi-encoder, cross-encoder, reranking, rerank]
+    evidence: [embedding, retrieval, semantic search, vector search, nearest neighbor,
+               dense retrieval, reranking, two-tower, candidate retrieval]
+  - id: vector_db_hybrid_search
+    weight: 1.1
+    skills: [pinecone, weaviate, qdrant, milvus, faiss, opensearch, elasticsearch, solr,
+             vector database, vector db, hybrid search, lucene]
+    evidence: [vector database, hybrid search, faiss, elasticsearch, opensearch, bm25,
+               inverted index, lucene, approximate nearest neighbor]
+  - id: ranking_search_rec_systems   # "shipped an end-to-end ranking/search/rec system at scale"
+    weight: 1.3
+    skills: [ranking, search, recommendation, recommender, recsys, matching, relevance,
+             personalization, learning to rank, ltr]
+    evidence: [ranking system, search system, recommendation system, recommender, recsys,
+               matching system, relevance, personalization, candidate matching, search ranking,
+               recommendation engine, feed ranking, ad ranking]
+  - id: ranking_evaluation
+    weight: 1.0
+    skills: [ndcg, mrr, map, mean average precision, learning to rank, ab testing,
+             a/b testing, offline evaluation, evaluation, experimentation]
+    evidence: [ndcg, mrr, mean average precision, ranking metric, a/b test, ab test,
+               offline evaluation, online evaluation, offline-to-online, experimentation,
+               relevance judgement, eval framework]
+  - id: strong_python
+    weight: 0.7
+    skills: [python]
+    evidence: [python, pyspark]
+
+nice_to_haves:                   # JD "we'd like you to have but won't reject you for"
+  - id: llm_finetuning
+    weight: 0.45
+    skills: [lora, qlora, peft, fine-tuning, fine tuning, fine-tuning llms, instruction tuning,
+             rlhf, dpo]
+    evidence: [fine-tune, lora, qlora, peft, instruction tuning]
+  - id: learning_to_rank_models
+    weight: 0.40
+    skills: [xgboost, lightgbm, catboost, learning to rank, ltr, gradient boosting,
+             neural ranking]
+    evidence: [xgboost, lightgbm, learning to rank, gradient boosted, neural ranker]
+  - id: hr_marketplace_domain
+    weight: 0.35
+    skills: [hr-tech, hrtech, recruiting, marketplace, ats, talent]
+    evidence: [recruiting, hr-tech, marketplace, two-sided marketplace, talent, candidate,
+               job matching, hiring]
+  - id: distributed_inference
+    weight: 0.30
+    skills: [distributed systems, spark, kafka, ray, distributed training,
+             inference optimization, triton, onnx, quantization]
+    evidence: [distributed, large-scale inference, latency, throughput, sharding,
+               quantization, model serving]
+  - id: open_source
+    weight: 0.30
+    skills: [open source, open-source]
+    evidence: [open-source, open source, maintainer, contributor, pypi, github stars,
+               published a paper, conference talk]
+
+# -----------------------------------------------------------------------------
+# Hard negatives. JD "Things we explicitly do NOT want" + the disqualifiers section.
+# `penalty` multiplies the fit score (1.0 = no penalty, 0.5 = halve it). Logic that
+# decides whether each applies lives in disqualifiers.py and reads these params.
+# -----------------------------------------------------------------------------
+disqualifiers:
+  title_chaser:                  # "switching companies every 1.5 years ... not a fit; here 3+ yrs"
+    penalty: 0.55
+    max_avg_tenure_months: 18
+    min_jobs_to_judge: 3
+  consulting_only:               # "only worked at consulting firms ... entire career"
+    penalty: 0.60
+    companies: [tcs, tata consultancy, infosys, wipro, accenture, cognizant, capgemini,
+                hcl, "hcl technologies", tech mahindra, mindtree, ltimindtree, "l&t infotech",
+                mphasis, "dxc", "ibm services", "deloitte", "pwc", "kpmg", "ey",
+                persistent, hexaware, birlasoft, coforge, "nttdata", "ntt data"]
+    # exempt if ANY prior product-company role exists in history
+  research_only:                 # "pure research environments ... without any production deployment"
+    penalty: 0.55
+    research_employers: [university, institute, lab, laboratory, research, iit, iisc,
+                         academia, college, "max planck", cnrs, postdoc]
+    production_evidence: [production, deployed, real users, shipped, scale, latency,
+                          in production, serving, customers, users]
+  recent_llm_wrapper_only:       # "'AI experience' = under 12 months of LangChain calling OpenAI"
+    penalty: 0.50
+    wrapper_terms: [langchain, llamaindex, llama-index, openai api, gpt wrapper, prompt engineering,
+                    autogpt, crewai]
+    recent_months: 12
+    needs_pre_llm_ml: [machine learning, ml, retrieval, ranking, recommendation, nlp,
+                       data science]   # rescued if substantial pre-LLM ML present
+  framework_enthusiast:          # "GitHub full of LangChain tutorials ... not systems"
+    penalty: 0.75
+    terms: [tutorial, demo, boilerplate, starter, hello world]
+  no_recent_code:                # "senior who hasn't written production code in 18 months"
+    penalty: 0.70
+    nonic_titles: [architect, "solutions architect", "engineering manager", director,
+                   "vp ", "vice president", "head of", cto, "tech lead", "principal architect"]
+    # only fires if current role is a non-IC title AND no recent hands-on evidence
+  cv_speech_robotics_no_nlp:     # "primary expertise CV/speech/robotics without NLP/IR"
+    penalty: 0.55
+    domain_terms: [computer vision, image classification, object detection, segmentation,
+                   speech recognition, asr, robotics, slam, lidar, autonomous driving]
+    nlp_ir_terms: [nlp, natural language, retrieval, ranking, search, embeddings,
+                   recommendation, information retrieval, text]
+
+# -----------------------------------------------------------------------------
+# Behavioral availability. JD: "a perfect-on-paper candidate who hasn't logged in
+# for 6 months and has a 5% recruiter response rate is, for hiring purposes, not
+# actually available. Down-weight them appropriately." Implemented as a multiplier.
+# -----------------------------------------------------------------------------
+behavioral:
+  weight: 0.30                   # max fraction of the score the modifier can swing
+  reference_date: "2026-06-01"   # "today" for recency math (dataset is anchored mid-2026)
+  recency_days_full: 30          # active within 30d -> full marks
+  recency_days_zero: 180         # inactive >= 180d -> floor (the "6 months" line)
+  response_rate_good: 0.5
+  response_rate_floor: 0.1       # the "5% response rate" red flag region
+  notice_period_great: 30        # "We'd love sub-30-day notice"
+  notice_period_ok: 90
+  # signals that contribute, with relative importance inside the modifier
+  components:
+    recency: 0.30
+    recruiter_response_rate: 0.22
+    open_to_work_flag: 0.12
+    interview_completion_rate: 0.12
+    notice_period: 0.10
+    profile_completeness_score: 0.06
+    saved_by_recruiters_30d: 0.04
+    verified: 0.04               # verified_email + verified_phone
+
+# -----------------------------------------------------------------------------
+# Skill trust. A claimed skill is believed in proportion to corroboration, which
+# is what separates a real "NLP, advanced, 26mo, 71/100 assessment" from a stuffed
+# "NLP, expert, 0mo, no assessment".
+# -----------------------------------------------------------------------------
+skill_trust:
+  base: 0.25                     # credit for merely listing a relevant skill
+  duration_full_months: 18       # >= this many months of use -> full duration credit
+  endorsement_full: 15           # >= this many endorsements -> full endorsement credit
+  assessment_full: 70            # >= this assessment score -> full assessment credit
+  # weights of each corroboration channel (sum with base, then clipped to 1.0)
+  w_duration: 0.30
+  w_endorsement: 0.20
+  w_assessment: 0.25
+  w_proficiency: 0.10            # expert/advanced > beginner, but only mildly
+
+# -----------------------------------------------------------------------------
+# Final structured-score component weights. Tuned so title/career evidence and
+# corroborated must-haves dominate, exactly as the JD demands.
+# -----------------------------------------------------------------------------
+weights:
+  title_career_fit: 0.34
+  must_have_coverage: 0.30
+  experience_fit: 0.11
+  nice_to_haves: 0.08
+  education: 0.05
+  location: 0.07
+  semantic: 0.05                 # blended in the hybrid ranker only
+
+# Ideal-candidate sketch ("How to read between the lines"). Used for reasoning +
+# as soft targets, not hard gates.
+ideal_profile:
+  total_years: [6, 8]
+  applied_ml_years: [4, 5]
+  must_have_shipped: "an end-to-end ranking/search/recommendation system to real users"
+  company_type_preferred: product     # not pure services
+  product_company_signal: true
+  external_validation_valued: true     # papers, talks, open-source
