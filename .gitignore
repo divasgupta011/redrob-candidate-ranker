@@ -1,0 +1,50 @@
+# ===== Secrets / env =====
+.env
+.env.*
+!.env.example
+*.key
+secrets/
+
+# ===== Raw dataset (often private hackathon data — keep out of git) =====
+data/raw/
+data/**/*.csv
+data/**/*.json
+data/**/*.jsonl
+data/**/*.xlsx
+data/**/*.parquet
+data/**/*.zip
+# (whitelist a small sample + the schema docs if we want them tracked)
+!data/sample/
+!data/**/schema*.md
+!data/**/README*.md
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Node (if any UI/tooling) =====
+node_modules/
+dist/
+.vite/
+
+# ===== Model / embedding caches & generated artifacts =====
+.cache/
+embeddings_cache/
+*.faiss
+*.index
+models/downloaded/
+
+# ===== OS / editor =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
