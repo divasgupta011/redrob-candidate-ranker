@@ -28,6 +28,7 @@ try:
 except Exception:
     pass
 
+from redrob_ranker.behavioral import behavioral_modifier
 from redrob_ranker.disqualifiers import apply_disqualifiers
 from redrob_ranker.features import extract_features, skill_trust
 from redrob_ranker.honeypot import detect_honeypot
@@ -123,6 +124,8 @@ def cmd_candidate(args, spec):
 
     f = extract_features(c, spec)
     dq = apply_disqualifiers(c, spec, f)
+    bh = behavioral_modifier(c, spec)
+    hp = detect_honeypot(c, spec)
     print("\nFeature sub-scores:")
     print(f"  title_career_fit  : {f.title_career_fit:4.2f}")
     print(f"  must_have_coverage: {f.must_have_coverage:4.2f}")
@@ -146,7 +149,17 @@ def cmd_candidate(args, spec):
             print(f"      - {note}")
     else:
         print("  disqualifiers fired      : none (x1.00)")
-    print(f"  STRUCTURED SCORE         : {f.base_fit * dq.multiplier:4.3f}")
+    print(f"  behavioral availability  : {bh.availability:4.2f}  -> modifier x{bh.modifier:.2f}")
+    if bh.positives:
+        print(f"      + {', '.join(bh.positives)}")
+    if bh.concerns:
+        print(f"      - {', '.join(bh.concerns)}")
+    final = f.base_fit * dq.multiplier * bh.modifier
+    if hp.is_honeypot:
+        print(f"  HONEYPOT: {hp.reasons[0]} -> forced to bottom")
+        final = 0.0
+    print(f"  FINAL SCORE              : {final:4.3f}"
+          f"   (base x disqualifier x behavioral{', honeypot=0' if hp.is_honeypot else ''})")
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +212,37 @@ def cmd_honeypot(args, spec):
 
 
 # ---------------------------------------------------------------------------
+# sub-command: behavioral (availability modifier per candidate)
+# ---------------------------------------------------------------------------
+
+def cmd_behavioral(args, spec):
+    cands = _load(args.candidates, args.limit)
+    rows = [(behavioral_modifier(c, spec), c) for c in cands]
+    rows.sort(key=lambda r: -r[0].availability)
+    print(f"Behavioral availability for {len(rows)} candidates "
+          f"(modifier = how much fit is scaled by reachability)\n")
+    header = (f"{'avail':>6} {'modx':>5} {'title':24} {'active':>11} {'resp':>5} "
+              f"{'notice':>6}  notes")
+
+    def show(bh, c):
+        note = ", ".join(bh.concerns or bh.positives)
+        print(f"{bh.availability:6.2f} {bh.modifier:5.2f} {c.current_title[:23]:24} "
+              f"{str(c.signals.last_active_date):>11} {c.signals.recruiter_response_rate:5.2f} "
+              f"{c.signals.notice_period_days:6d}  {note[:36]}")
+
+    n = min(args.top, len(rows))
+    print("MOST available:\n" + header)
+    print(_rule())
+    for bh, c in rows[:n]:
+        show(bh, c)
+    if len(rows) > n:
+        print("\nLEAST available:\n" + header)
+        print(_rule())
+        for bh, c in rows[-n:]:
+            show(bh, c)
+
+
+# ---------------------------------------------------------------------------
 
 def main():
     # shared options live on a parent parser so they work AFTER the sub-command,
@@ -231,6 +275,12 @@ def main():
     p.add_argument("--top", type=int, default=20, help="max flagged profiles to print")
     p.add_argument("--limit", type=int, default=None, help="only scan first N candidates")
     p.set_defaults(func=cmd_honeypot)
+
+    p = sub.add_parser("behavioral", parents=[common],
+                       help="show the availability modifier (most/least reachable)")
+    p.add_argument("--top", type=int, default=10)
+    p.add_argument("--limit", type=int, default=None)
+    p.set_defaults(func=cmd_behavioral)
 
     args = ap.parse_args()
     spec = load_jd_spec(args.spec)
