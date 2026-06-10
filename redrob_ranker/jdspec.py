@@ -60,6 +60,27 @@ class JDSpec:
         self.titles_core: tuple[str, ...] = _lc_tuple(titles.get("core"))
         self.titles_adjacent: tuple[str, ...] = _lc_tuple(titles.get("adjacent"))
         self.titles_negative: tuple[str, ...] = _lc_tuple(titles.get("negative"))
+        self.title_family_scores: dict[str, float] = {
+            "core": 1.0, "adjacent": 0.6, "other": 0.4, "negative": 0.1,
+            **{k: float(v) for k, v in (titles.get("family_scores") or {}).items()},
+        }
+
+        comp = data.get("company_classification", {})
+        self.services_industry_terms: tuple[str, ...] = _lc_tuple(
+            comp.get("services_industry_terms")
+        ) or ("it services", "consulting", "outsourcing", "staffing", "business process")
+
+        edu = data.get("education", {})
+        self.edu_relevant_fields: tuple[str, ...] = _lc_tuple(edu.get("relevant_fields")) or (
+            "computer science", "artificial intelligence", "machine learning", "data",
+            "statistics", "mathematics", "electronics", "software", "information",
+        )
+        self.edu_tier_scores: dict[str, float] = {
+            "tier_1": 1.0, "tier_2": 0.8, "tier_3": 0.6, "tier_4": 0.4, "unknown": 0.5,
+            **{k: float(v) for k, v in (edu.get("tier_scores") or {}).items()},
+        }
+        self.edu_field_bonus: float = float(edu.get("field_bonus", 0.10))
+        self.edu_default: float = float(edu.get("default", 0.50))
 
         self.must_haves: list[Capability] = self._capabilities(data.get("must_haves", []))
         self.nice_to_haves: list[Capability] = self._capabilities(data.get("nice_to_haves", []))

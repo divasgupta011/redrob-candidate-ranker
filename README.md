@@ -93,6 +93,21 @@ python data/raw/challenge/validate_submission.py submission.csv
 > `rank.py` also runs in a **structured-only** mode with no embedding artifact present,
 > so reproduction never fails for lack of the pre-computed file.
 
+## Retargeting to a different role
+
+The scoring **engine is JD-agnostic** — every role-specific signal lives in
+`config/jd_spec.yaml`, and the Python only reads from it. To rank against a
+different job description you edit *one file*, no code changes:
+
+- `titles` — core / adjacent / negative families (+ their fit weights)
+- `must_haves` / `nice_to_haves` — the skill ontology with synonyms and evidence phrases
+- `disqualifiers` — the hard-negatives and their parameters
+- `behavioral`, `skill_trust`, `weights`, `education`, `company_classification` — thresholds & weights
+
+This mirrors how the role actually behaves in production (the JD itself notes "the JD
+changes every six months"). The YAML was distilled from the prose JD offline; a new
+role can be re-distilled the same way (optionally LLM-assisted, offline only).
+
 ## Status
 
 Built step by step (see git history). Current: project scaffolding. Next: data layer +
