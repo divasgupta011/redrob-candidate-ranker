@@ -88,6 +88,24 @@ titles:
     - qa engineer
     - frontend engineer
     - mobile developer
+  # numeric fit weight per title family (tuning lives in the spec, not in code)
+  family_scores: {core: 1.0, adjacent: 0.6, other: 0.4, negative: 0.1}
+
+# How a past employer reads as services/consulting vs product work. Combined with
+# the consulting-company list under disqualifiers to classify each role.
+company_classification:
+  services_industry_terms: [it services, consulting, outsourcing, staffing,
+                            "information technology & services", business process]
+
+# Education scoring (minor signal). relevant_fields earn a small bonus; tier_scores
+# map the dataset's institution tiers to a [0,1] prestige score.
+education:
+  relevant_fields: [computer science, artificial intelligence, machine learning,
+                    data science, data, statistics, mathematics, electronics,
+                    software, information]
+  tier_scores: {tier_1: 1.0, tier_2: 0.8, tier_3: 0.6, tier_4: 0.4, unknown: 0.5}
+  field_bonus: 0.10
+  default: 0.50            # used when a candidate lists no education
 
 # -----------------------------------------------------------------------------
 # Skill ontology. Each capability lists the surface terms that count for it.
@@ -162,9 +180,10 @@ nice_to_haves:                   # JD "we'd like you to have but won't reject yo
 # -----------------------------------------------------------------------------
 disqualifiers:
   title_chaser:                  # "switching companies every 1.5 years ... not a fit; here 3+ yrs"
-    penalty: 0.55
-    max_avg_tenure_months: 18
+    penalty: 0.70                # softened: must also show title ESCALATION (see below), so
+    max_avg_tenure_months: 18    # a genuine engineer who simply changed jobs isn't punished
     min_jobs_to_judge: 3
+    require_title_escalation: true   # JD criterion is hopping WHILE climbing Senior->Staff->Principal
   consulting_only:               # "only worked at consulting firms ... entire career"
     penalty: 0.60
     companies: [tcs, tata consultancy, infosys, wipro, accenture, cognizant, capgemini,
@@ -173,13 +192,13 @@ disqualifiers:
                 persistent, hexaware, birlasoft, coforge, "nttdata", "ntt data"]
     # exempt if ANY prior product-company role exists in history
   research_only:                 # "pure research environments ... without any production deployment"
-    penalty: 0.55
+    penalty: 0.60
     research_employers: [university, institute, lab, laboratory, research, iit, iisc,
                          academia, college, "max planck", cnrs, postdoc]
     production_evidence: [production, deployed, real users, shipped, scale, latency,
                           in production, serving, customers, users]
   recent_llm_wrapper_only:       # "'AI experience' = under 12 months of LangChain calling OpenAI"
-    penalty: 0.50
+    penalty: 0.60
     wrapper_terms: [langchain, llamaindex, llama-index, openai api, gpt wrapper, prompt engineering,
                     autogpt, crewai]
     recent_months: 12
@@ -192,9 +211,11 @@ disqualifiers:
     penalty: 0.70
     nonic_titles: [architect, "solutions architect", "engineering manager", director,
                    "vp ", "vice president", "head of", cto, "tech lead", "principal architect"]
-    # only fires if current role is a non-IC title AND no recent hands-on evidence
+    # only fires if current role is a non-IC title AND none of these hands-on terms appear
+    code_evidence: [build, built, implement, develop, wrote, code, coded, python,
+                    shipped, deployed, designed, engineer]
   cv_speech_robotics_no_nlp:     # "primary expertise CV/speech/robotics without NLP/IR"
-    penalty: 0.55
+    penalty: 0.65
     domain_terms: [computer vision, image classification, object detection, segmentation,
                    speech recognition, asr, robotics, slam, lidar, autonomous driving]
     nlp_ir_terms: [nlp, natural language, retrieval, ranking, search, embeddings,
