@@ -1,0 +1,14 @@
+# ============================================================================
+# RUNTIME dependencies for the ranking step (`python rank.py ...`).
+#
+# Deliberately tiny so the ranking step honours the hackathon compute budget:
+#   CPU-only, <= 5 min on 100k candidates, <= 16 GB RAM, NO network.
+# No torch / sentence-transformers here -- embeddings are PRE-COMPUTED offline
+# (see requirements-precompute.txt) and loaded from disk as plain numpy arrays.
+# ============================================================================
+numpy>=1.26,<3
+PyYAML>=6.0
+
+# Optional but recommended: ~5-10x faster JSONL parsing of the 487 MB pool.
+# The loader falls back to the stdlib `json` module if orjson is absent.
+orjson>=3.9 ; platform_python_implementation == "CPython"

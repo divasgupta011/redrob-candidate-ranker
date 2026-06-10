@@ -5,18 +5,18 @@
 *.key
 secrets/
 
-# ===== Raw dataset (often private hackathon data — keep out of git) =====
+# ===== Dataset =====
+# The full 100k pool (487MB) and all raw bundle files stay out of git.
 data/raw/
-data/**/*.csv
-data/**/*.json
+# Big/streamed data formats anywhere under data/ (the full pool is candidates.jsonl)
 data/**/*.jsonl
+data/**/*.jsonl.gz
 data/**/*.xlsx
 data/**/*.parquet
 data/**/*.zip
-# (whitelist a small sample + the schema docs if we want them tracked)
+# ...but DO commit the small public sample used for tests + the sandbox demo.
 !data/sample/
-!data/**/schema*.md
-!data/**/README*.md
+!data/sample/**
 
 # ===== Python =====
 __pycache__/
@@ -41,6 +41,11 @@ embeddings_cache/
 *.faiss
 *.index
 models/downloaded/
+# Pre-computed embedding artifacts (large, regenerable via precompute.py)
+artifacts/*.npy
+artifacts/*.npz
+artifacts/*.memmap
+*.memmap
 
 # ===== OS / editor =====
 .DS_Store

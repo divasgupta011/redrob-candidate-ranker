@@ -1,0 +1,16 @@
+# ============================================================================
+# OFFLINE PRE-COMPUTATION dependencies (`python precompute.py ...`).
+#
+# These are heavy (torch + transformers) and are used ONLY outside the timed
+# ranking step -- to embed the candidate pool once and write a compact .npy
+# artifact that rank.py then loads with numpy alone. This keeps the live ranking
+# step fully offline and within the 5-minute CPU budget.
+#
+# Install with:  pip install -r requirements.txt -r requirements-precompute.txt
+# ============================================================================
+-r requirements.txt
+
+sentence-transformers>=2.7
+# CPU build of torch is sufficient; the embedding model used (all-MiniLM-L6-v2 /
+# bge-small) runs comfortably on CPU for the one-time pool encode.
+torch>=2.2
