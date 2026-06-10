@@ -30,6 +30,7 @@ except Exception:
 
 from redrob_ranker.disqualifiers import apply_disqualifiers
 from redrob_ranker.features import extract_features, skill_trust
+from redrob_ranker.honeypot import detect_honeypot
 from redrob_ranker.jdspec import load_jd_spec
 from redrob_ranker.loader import iter_candidates, load_sample_json
 
@@ -174,27 +175,62 @@ def cmd_features(args, spec):
 
 
 # ---------------------------------------------------------------------------
+# sub-command: honeypot (which profiles are internally impossible, and why)
+# ---------------------------------------------------------------------------
+
+def cmd_honeypot(args, spec):
+    cands = _load(args.candidates, args.limit)
+    flagged = []
+    for c in cands:
+        hp = detect_honeypot(c, spec)
+        if hp.is_honeypot:
+            flagged.append((c, hp))
+    print(f"Scanned {len(cands)} candidates -> {len(flagged)} flagged as honeypots "
+          f"({100*len(flagged)/max(len(cands),1):.3f}%)\n")
+    if not flagged:
+        print("None in this set. The ~80 honeypots are ~0.08% of the 100k pool, so a small\n"
+              "sample usually has zero. Try the full pool:\n"
+              "  python demo.py honeypot --candidates data/raw/challenge/candidates.jsonl")
+        return
+    for c, hp in flagged[:args.top]:
+        print(f"  {c.candidate_id}  [{c.current_title}]  yoe={c.years_of_experience}")
+        for r in hp.reasons:
+            print(f"      ! {r}")
+
+
+# ---------------------------------------------------------------------------
 
 def main():
+    # shared options live on a parent parser so they work AFTER the sub-command,
+    # e.g. `python demo.py honeypot --candidates path.jsonl`
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--candidates", type=Path, default=DEFAULT_SAMPLE,
+                        help="candidate file (.json array or .jsonl[.gz] stream)")
+    common.add_argument("--spec", type=Path, default=None, help="path to jd_spec.yaml")
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--candidates", type=Path, default=DEFAULT_SAMPLE,
-                    help="candidate file (.json array or .jsonl[.gz] stream)")
-    ap.add_argument("--spec", type=Path, default=None, help="path to jd_spec.yaml")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    p = sub.add_parser("data", help="parse the pool and show summary stats")
+    p = sub.add_parser("data", parents=[common], help="parse the pool and show summary stats")
     p.add_argument("--limit", type=int, default=None)
     p.set_defaults(func=cmd_data)
 
-    p = sub.add_parser("candidate", help="deep-dive one candidate through every stage")
+    p = sub.add_parser("candidate", parents=[common],
+                       help="deep-dive one candidate through every stage")
     p.add_argument("id", help="candidate_id (CAND_XXXXXXX) or row index")
     p.set_defaults(func=cmd_candidate)
 
-    p = sub.add_parser("features", help="rank the pool by structured fit")
+    p = sub.add_parser("features", parents=[common], help="rank the pool by structured fit")
     p.add_argument("--top", type=int, default=15)
     p.add_argument("--limit", type=int, default=None, help="only load first N candidates")
     p.set_defaults(func=cmd_features)
+
+    p = sub.add_parser("honeypot", parents=[common],
+                       help="list internally-impossible (honeypot) profiles")
+    p.add_argument("--top", type=int, default=20, help="max flagged profiles to print")
+    p.add_argument("--limit", type=int, default=None, help="only scan first N candidates")
+    p.set_defaults(func=cmd_honeypot)
 
     args = ap.parse_args()
     spec = load_jd_spec(args.spec)
