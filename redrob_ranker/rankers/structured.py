@@ -24,15 +24,27 @@ from .base import RankedCandidate, Ranker
 class StructuredRanker(Ranker):
     name = "structured"
 
-    def __init__(self, spec: JDSpec):
+    def __init__(self, spec: JDSpec, use_honeypot: bool = True,
+                 use_disqualifiers: bool = True, use_behavioral: bool = True):
         self.spec = spec
+        # toggles exist so the eval harness can ablate each guard and measure its effect
+        self.use_honeypot = use_honeypot
+        self.use_disqualifiers = use_disqualifiers
+        self.use_behavioral = use_behavioral
 
     def score_one(self, c: Candidate) -> RankedCandidate:
         f = extract_features(c, self.spec)
         dq = apply_disqualifiers(c, self.spec, f)
         bh = behavioral_modifier(c, self.spec)
         hp = detect_honeypot(c, self.spec)
-        score = 0.0 if hp.is_honeypot else f.base_fit * dq.multiplier * bh.modifier
+        if self.use_honeypot and hp.is_honeypot:
+            score = 0.0
+        else:
+            score = f.base_fit
+            if self.use_disqualifiers:
+                score *= dq.multiplier
+            if self.use_behavioral:
+                score *= bh.modifier
         return RankedCandidate(c, score, {
             "features": f, "dq": dq, "behavioral": bh, "honeypot": hp,
             "fit": f.base_fit,

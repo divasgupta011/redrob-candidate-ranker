@@ -11,18 +11,21 @@ raced against each other by the evaluation harness:
 """
 from .base import RankedCandidate, Ranker
 from .hybrid import HybridRanker
+from .keyword_count import SkillCountRanker
 from .lexical import LexicalRanker
 from .semantic import SemanticRanker
 from .structured import StructuredRanker
 
-__all__ = ["Ranker", "RankedCandidate", "LexicalRanker", "SemanticRanker",
-           "StructuredRanker", "HybridRanker", "build_ranker"]
+__all__ = ["Ranker", "RankedCandidate", "SkillCountRanker", "LexicalRanker",
+           "SemanticRanker", "StructuredRanker", "HybridRanker", "build_ranker"]
 
 
 def build_ranker(name: str, spec, semantic: SemanticRanker | None = None) -> Ranker:
     """Factory used by the CLI/eval harness. ``semantic`` (if given) is reused for
-    the hybrid blend; lexical/structured ignore it."""
+    the hybrid blend; the baselines ignore it."""
     name = name.lower()
+    if name == "skill_count":
+        return SkillCountRanker(spec)
     if name == "lexical":
         return LexicalRanker(spec)
     if name == "structured":
