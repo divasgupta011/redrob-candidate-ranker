@@ -35,6 +35,7 @@ from redrob_ranker.honeypot import detect_honeypot
 from redrob_ranker.jdspec import load_jd_spec
 from redrob_ranker.loader import iter_candidates, load_sample_json
 from redrob_ranker.rankers import build_ranker
+from redrob_ranker.reasoning import generate_reasoning
 
 DEFAULT_SAMPLE = Path(__file__).resolve().parent / "data" / "sample" / "sample_candidates.json"
 
@@ -161,6 +162,8 @@ def cmd_candidate(args, spec):
         final = 0.0
     print(f"  FINAL SCORE              : {final:4.3f}"
           f"   (base x disqualifier x behavioral{', honeypot=0' if hp.is_honeypot else ''})")
+    breakdown = {"features": f, "dq": dq, "behavioral": bh, "honeypot": hp}
+    print(f"\n  REASONING (submission text):\n    {generate_reasoning(c, spec, final, breakdown)}")
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +257,12 @@ def cmd_rank(args, spec):
     ranked.sort(key=lambda r: (-r.score, r.candidate.candidate_id))
     note = " (no embeddings -> structured-only)" if args.ranker == "hybrid" else ""
     print(f"Ranker '{args.ranker}'{note}: top {min(args.top, len(ranked))} of {len(ranked)}\n")
+    if args.reasons:
+        for i, rc in enumerate(ranked[:args.top], 1):
+            c = rc.candidate
+            txt = generate_reasoning(c, spec, rc.score, rc.breakdown)
+            print(f"#{i:<3} {rc.score:5.3f}  {c.candidate_id}\n      {txt}\n")
+        return
     print(f"{'#':>3} {'score':>6} {'title':28} {'yoe':>4}  candidate_id")
     print(_rule())
     for i, rc in enumerate(ranked[:args.top], 1):
@@ -306,6 +315,7 @@ def main():
     p.add_argument("--ranker", choices=["lexical", "structured", "hybrid"], default="hybrid")
     p.add_argument("--top", type=int, default=15)
     p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--reasons", action="store_true", help="print the generated reasoning per candidate")
     p.set_defaults(func=cmd_rank)
 
     args = ap.parse_args()
