@@ -9,3 +9,28 @@ raced against each other by the evaluation harness:
                  disqualifiers, honeypot filter, behavioural modifier) -- the decisive layer
     hybrid     - semantic recall blended with structured scoring (the submission ranker)
 """
+from .base import RankedCandidate, Ranker
+from .hybrid import HybridRanker
+from .lexical import LexicalRanker
+from .semantic import SemanticRanker
+from .structured import StructuredRanker
+
+__all__ = ["Ranker", "RankedCandidate", "LexicalRanker", "SemanticRanker",
+           "StructuredRanker", "HybridRanker", "build_ranker"]
+
+
+def build_ranker(name: str, spec, semantic: SemanticRanker | None = None) -> Ranker:
+    """Factory used by the CLI/eval harness. ``semantic`` (if given) is reused for
+    the hybrid blend; lexical/structured ignore it."""
+    name = name.lower()
+    if name == "lexical":
+        return LexicalRanker(spec)
+    if name == "structured":
+        return StructuredRanker(spec)
+    if name == "semantic":
+        if semantic is None:
+            raise ValueError("semantic ranker needs precomputed embeddings (run precompute.py)")
+        return semantic
+    if name == "hybrid":
+        return HybridRanker(spec, semantic=semantic)
+    raise ValueError(f"unknown ranker: {name!r}")

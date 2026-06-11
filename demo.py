@@ -34,6 +34,7 @@ from redrob_ranker.features import extract_features, skill_trust
 from redrob_ranker.honeypot import detect_honeypot
 from redrob_ranker.jdspec import load_jd_spec
 from redrob_ranker.loader import iter_candidates, load_sample_json
+from redrob_ranker.rankers import build_ranker
 
 DEFAULT_SAMPLE = Path(__file__).resolve().parent / "data" / "sample" / "sample_candidates.json"
 
@@ -243,6 +244,25 @@ def cmd_behavioral(args, spec):
 
 
 # ---------------------------------------------------------------------------
+# sub-command: rank (run any ranker end-to-end)
+# ---------------------------------------------------------------------------
+
+def cmd_rank(args, spec):
+    cands = _load(args.candidates, args.limit)
+    ranker = build_ranker(args.ranker, spec)   # no embeddings here -> hybrid == structured-only
+    ranked = ranker.rank(cands)
+    ranked.sort(key=lambda r: (-r.score, r.candidate.candidate_id))
+    note = " (no embeddings -> structured-only)" if args.ranker == "hybrid" else ""
+    print(f"Ranker '{args.ranker}'{note}: top {min(args.top, len(ranked))} of {len(ranked)}\n")
+    print(f"{'#':>3} {'score':>6} {'title':28} {'yoe':>4}  candidate_id")
+    print(_rule())
+    for i, rc in enumerate(ranked[:args.top], 1):
+        c = rc.candidate
+        print(f"{i:3d} {rc.score:6.3f} {c.current_title[:27]:28} "
+              f"{c.years_of_experience:4.1f}  {c.candidate_id}")
+
+
+# ---------------------------------------------------------------------------
 
 def main():
     # shared options live on a parent parser so they work AFTER the sub-command,
@@ -281,6 +301,12 @@ def main():
     p.add_argument("--top", type=int, default=10)
     p.add_argument("--limit", type=int, default=None)
     p.set_defaults(func=cmd_behavioral)
+
+    p = sub.add_parser("rank", parents=[common], help="run a ranker end-to-end")
+    p.add_argument("--ranker", choices=["lexical", "structured", "hybrid"], default="hybrid")
+    p.add_argument("--top", type=int, default=15)
+    p.add_argument("--limit", type=int, default=None)
+    p.set_defaults(func=cmd_rank)
 
     args = ap.parse_args()
     spec = load_jd_spec(args.spec)
